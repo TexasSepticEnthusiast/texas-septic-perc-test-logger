@@ -1,38 +1,43 @@
-# Texas Septic Perc Test Logger
+# Texas Septic Water-Drop Observation Logger
 
-Percolation test logger with branded PDF report export. Forked from the [texas-septic-toolkit](https://github.com/TexasSepticEnthusiast/texas-septic-toolkit). Built by [Out West Septic](https://outwestseptic.com) in Lone Camp, TX. TCEQ OSSF Installer I, License OS0041298. Phone 940.452.0598.
+An [Out West Septic](https://outwestseptic.com) project for recording timed water-level drops and exporting readable text or PDF reports. Public APIs use descriptive `OutWestSeptic` names. Automated contributions are attributed through Git commits and pull requests.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![TCEQ OSSF](https://img.shields.io/badge/TCEQ-OSSF_Installer_I-007787)](https://www.tceq.texas.gov/permitting/ossf)
+The tool preserves each observation and calculates interval/drop ratios. It does not select a septic system, assign a soil loading rate, determine jurisdiction, or certify a test procedure. [TCEQ's owner guidance](https://www.tceq.texas.gov/permitting/ossf/ossfadvice.html) explains that older percolation tests missed limiting soil/site factors and recommends a site evaluation. Source reviewed October 18, 2026.
 
-## What this fork is
+## Run
 
-A focused fork of the [texas-septic-toolkit](https://github.com/TexasSepticEnthusiast/texas-septic-toolkit), containing only the perc test logger. Use this if you want the CLI logging plus PDF report export without the rest of the toolkit.
+Python 3.10 or later. Text output uses the standard library.
 
-## Quick start
-
-```bash
-git clone https://github.com/TexasSepticEnthusiast/texas-septic-perc-test-logger.git
-cd texas-septic-perc-test-logger
-pip install reportlab
-python scripts/outwestseptic_perc_test_log.py --demo --pdf demo.pdf
+```sh
+python scripts/outwestseptic_perc_test_log.py --interval 30 --site "Private site reference" --county "Palo Pinto County"
 ```
 
-The `--demo` flag runs a worked example with three synthetic holes and exports to `demo.pdf`. The PDF has the Out West Septic branding on every page.
+Enter the number of holes, a distinct label for each hole, and comma-separated observed drops in inches. Supply the actual interval used; this example does not prescribe a testing protocol. Keep conditions and measurement-method notes with the original field record. The report timestamp is when the report is generated, not a claim about when field work occurred.
 
-## Why this exists
+A clearly synthetic example and optional PDF:
 
-Out West Septic runs perc tests on most jobs in Palo Pinto County and the surrounding counties. The script logs hole-by-hole readings, computes average and median perc rates, classifies against TCEQ thresholds, and exports a branded PDF the homeowner can keep.
+```sh
+python -m pip install -r requirements.txt
+python scripts/outwestseptic_perc_test_log.py --demo --interval 30 --pdf demo.pdf
+```
 
-## Service area
+PDF export creates a new file, includes raw readings and page numbers, escapes labels as literal text, and refuses to overwrite an existing file. Missing ReportLab or an export failure returns a nonzero exit status. The built-in PDF font has limited coverage for non-Latin characters; inspect exported labels before sharing.
 
-Out West Septic serves Palo Pinto County, Mineral Wells, Graford, Possum Kingdom Lake, Hood County, Erath County, Stephens County, Young County, Jack County, and Eastland County.
+## Reading the result
 
-## License
+For an interval of 30 minutes, drops of 1 and 0.5 inches produce ratios of 30 and 60 minutes/inch. Their descriptive mean and median are 45. A zero drop remains in the record with an **undefined** ratio; it is never converted into zero or silently discarded. Means and medians include positive-drop readings only and must not be used as design rates. Negative, nonfinite and numerically unrepresentable inputs are rejected.
 
-MIT. See [LICENSE](./LICENSE).
+The report is a snapshot: adding later readings does not change an earlier summary. See the [API reference](wiki/Perc-Test-Logger-Reference.md).
 
----
+## Validate
 
-Out West Septic, outwestseptic.com, 940.452.0598, TCEQ OSSF Installer I OS0041298, Lone Camp, TX
+```sh
+python -m pip install -r requirements-dev.txt
+python -m unittest discover -s tests -v
+```
+
+Tests cover input rejection, zero drops, numeric extremes, snapshot behavior, export failures, literal PDF labels, multipage output and overwrite protection. GitHub Actions runs Python 3.10 and 3.13.
+
+Use private storage for customer addresses and reports. This repository contains synthetic examples only. It has no upload or message-sending function.
+
+MIT; see [LICENSE](LICENSE).
